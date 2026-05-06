@@ -196,12 +196,14 @@ export class OverworldScene extends Phaser.Scene {
     this.playerTileX = nx
     this.playerTileY = ny
 
+    // Snap immediately, tiny squish for feedback
+    this.player.setPosition(this.playerWorldX(), this.playerWorldY())
+    this.player.setScale(1.1, 0.9)
     this.tweens.add({
       targets: this.player,
-      x: this.playerWorldX(),
-      y: this.playerWorldY(),
-      duration: 140,
-      ease: 'Linear',
+      scaleX: 1, scaleY: 1,
+      duration: 80,
+      ease: 'Back.easeOut',
     })
   }
 

@@ -26,6 +26,11 @@ export default function App() {
     startOverworldScene()
   }, [])
 
+  const handleReturnToVillage = useCallback(() => {
+    setScreen('overworld')
+    startOverworldScene()
+  }, [])
+
   const handleStrangerTalk = useCallback(() => {
     setScreen('npc_dialog')
   }, [])
@@ -72,6 +77,7 @@ export default function App() {
           onMainMenuStart={handleMenuStart}
           onStrangerTalk={handleStrangerTalk}
           onExitAttempt={handleExitAttempt}
+          onReturnToVillage={handleReturnToVillage}
         />
 
         {screen === 'npc_dialog' && (

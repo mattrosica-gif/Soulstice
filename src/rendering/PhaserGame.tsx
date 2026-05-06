@@ -7,9 +7,10 @@ import { BattleScene } from './scenes/BattleScene'
 import { BRIDGE } from './sceneBridge'
 
 interface PhaserGameProps {
-  onMainMenuStart: () => void
-  onStrangerTalk:  () => void
-  onExitAttempt:   () => void
+  onMainMenuStart:   () => void
+  onStrangerTalk:    () => void
+  onExitAttempt:     () => void
+  onReturnToVillage: () => void
 }
 
 export function PhaserGame({ onMainMenuStart, onStrangerTalk, onExitAttempt }: PhaserGameProps) {
@@ -17,9 +18,10 @@ export function PhaserGame({ onMainMenuStart, onStrangerTalk, onExitAttempt }: P
   const gameRef      = useRef<Phaser.Game | null>(null)
 
   // Keep bridge callbacks current without restarting the game
-  BRIDGE.onMainMenuStart = onMainMenuStart
-  BRIDGE.onStrangerTalk  = onStrangerTalk
-  BRIDGE.onExitAttempt   = onExitAttempt
+  BRIDGE.onMainMenuStart   = onMainMenuStart
+  BRIDGE.onStrangerTalk    = onStrangerTalk
+  BRIDGE.onExitAttempt     = onExitAttempt
+  BRIDGE.onReturnToVillage = onReturnToVillage
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return

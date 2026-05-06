@@ -1,210 +1,207 @@
 import Phaser from 'phaser'
 import { PALETTE } from '../palette'
-import { renderPixelMap, PIXEL_SCALE } from '../sprites/pixelMap'
 import {
-  SEASON_SPRITES, SEASON_PALETTES,
-  PLAYER_OVERWORLD_SPRITE, PLAYER_PALETTE,
-  RAM_DASS_NPC_SPRITE, RAM_DASS_PALETTE,
-} from '../sprites/characterSprites'
+  drawCharacter, drawRamDass, drawPlayerTopDown,
+  springAccessory, summerAccessory, autumnAccessory, winterAccessory,
+} from '../sprites/drawCharacter'
 
-const SPRITE_W = 24
-const SPRITE_H = 28  // trimmed bottom row
-const OVERWORLD_W = 16
-const OVERWORLD_H = 16
+const CHAR_W = 48
+const CHAR_H = 56
+const TILE   = 32
 
 export class BootScene extends Phaser.Scene {
   constructor() { super({ key: 'Boot' }) }
 
   create() {
-    this.generateCharacterSprites()
-    this.generateOverworldSprites()
-    this.generateTileTextures()
-    this.generateUITextures()
+    this.makeCharacterTextures()
+    this.makeOverworldTextures()
+    this.makeTileTextures()
+    this.makeUITextures()
     this.scene.start('MainMenu')
   }
 
-  private generateCharacterSprites() {
-    const seasons = ['spring', 'summer', 'autumn', 'winter'] as const
-    for (const season of seasons) {
-      const map = SEASON_SPRITES[season]
-      const palette = SEASON_PALETTES[season]
-      const w = SPRITE_W * PIXEL_SCALE
-      const h = SPRITE_H * PIXEL_SCALE
+  private makeCharacterTextures() {
+    const configs = [
+      {
+        season: 'spring',
+        bodyColor: 0x6ab870, bodyLight: 0x9ed898, bodyDark: 0x3a7840,
+        accessoryFn: springAccessory,
+      },
+      {
+        season: 'summer',
+        bodyColor: 0xd86030, bodyLight: 0xf09060, bodyDark: 0x903820,
+        accessoryFn: summerAccessory,
+      },
+      {
+        season: 'autumn',
+        bodyColor: 0xb87038, bodyLight: 0xd89860, bodyDark: 0x784818,
+        accessoryFn: autumnAccessory,
+      },
+      {
+        season: 'winter',
+        bodyColor: 0x5898c8, bodyLight: 0x88c0e8, bodyDark: 0x285888,
+        accessoryFn: winterAccessory,
+      },
+    ]
 
-      // Normal variant
+    for (const cfg of configs) {
+      // Normal
       const g = this.make.graphics({ x: 0, y: 0, add: false })
-      renderPixelMap(g, map.slice(0, SPRITE_H), palette, PIXEL_SCALE)
-      g.generateTexture(`char_${season}`, w, h)
+      drawCharacter(g, { ...cfg, bonded: false })
+      g.generateTexture(`char_${cfg.season}`, CHAR_W, CHAR_H)
       g.destroy()
 
-      // Bonded variant — add amber glow outline
+      // Bonded (amber glow ring)
       const gb = this.make.graphics({ x: 0, y: 0, add: false })
-      renderPixelMap(gb, map.slice(0, SPRITE_H), palette, PIXEL_SCALE)
-      gb.lineStyle(2, PALETTE.amberGlow, 0.8)
-      gb.strokeRect(2, 2, w - 4, h - 4)
-      gb.generateTexture(`char_${season}_bonded`, w, h)
+      drawCharacter(gb, { ...cfg, bonded: true })
+      gb.generateTexture(`char_${cfg.season}_bonded`, CHAR_W, CHAR_H)
       gb.destroy()
     }
   }
 
-  private generateOverworldSprites() {
-    // Player top-down sprite
+  private makeOverworldTextures() {
+    // Player
     const pg = this.make.graphics({ x: 0, y: 0, add: false })
-    renderPixelMap(pg, PLAYER_OVERWORLD_SPRITE, PLAYER_PALETTE, PIXEL_SCALE)
-    pg.generateTexture('player', OVERWORLD_W * PIXEL_SCALE, OVERWORLD_H * PIXEL_SCALE)
+    drawPlayerTopDown(pg, 0x5a78c8)
+    pg.generateTexture('player', 24, 24)
     pg.destroy()
 
-    // Ram Dass NPC sprite
-    const rg = this.make.graphics({ x: 0, y: 0, add: false })
-    renderPixelMap(rg, RAM_DASS_NPC_SPRITE, RAM_DASS_PALETTE, PIXEL_SCALE)
-    // Warm aura underneath
-    rg.fillStyle(PALETTE.amberGlow, 0.12)
-    rg.fillCircle(OVERWORLD_W * PIXEL_SCALE / 2, OVERWORLD_H * PIXEL_SCALE / 2, OVERWORLD_W * PIXEL_SCALE * 0.7)
-    rg.generateTexture('npc_ramdass', OVERWORLD_W * PIXEL_SCALE, OVERWORLD_H * PIXEL_SCALE)
-    rg.destroy()
-
-    // Generic NPC sprite (the complaining stranger)
+    // Stranger NPC (brownish coat)
     const ng = this.make.graphics({ x: 0, y: 0, add: false })
-    renderPixelMap(ng, PLAYER_OVERWORLD_SPRITE, {
-      ...PLAYER_PALETTE,
-      C: 0x7a5030, c: 0x9a6840,  // brown coat instead of blue
-    }, PIXEL_SCALE)
-    ng.generateTexture('npc_stranger', OVERWORLD_W * PIXEL_SCALE, OVERWORLD_H * PIXEL_SCALE)
+    drawPlayerTopDown(ng, 0x7a5828)
+    ng.generateTexture('npc_stranger', 24, 24)
     ng.destroy()
+
+    // Ram Dass NPC
+    const rg = this.make.graphics({ x: 0, y: 0, add: false })
+    drawRamDass(rg)
+    rg.generateTexture('npc_ramdass', 48, 56)
+    rg.destroy()
   }
 
-  private generateTileTextures() {
-    const tileSize = 32
-
-    const makeTile = (key: string, cb: (g: Phaser.GameObjects.Graphics) => void) => {
+  private makeTileTextures() {
+    const make = (key: string, cb: (g: Phaser.GameObjects.Graphics) => void) => {
       const g = this.make.graphics({ x: 0, y: 0, add: false })
       cb(g)
-      g.generateTexture(key, tileSize, tileSize)
+      g.generateTexture(key, TILE, TILE)
       g.destroy()
     }
 
-    // Grass — dark moss with subtle texture
-    makeTile('tile_grass', (g) => {
-      g.fillStyle(PALETTE.mossDeep, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
-      g.fillStyle(PALETTE.mossMid, 0.4)
-      // Subtle pixel variation
-      for (let i = 0; i < 6; i++) {
-        const x = (i * 7 + 3) % tileSize
-        const y = (i * 11 + 5) % tileSize
-        g.fillRect(x, y, 2, 2)
+    make('tile_grass', (g) => {
+      g.fillStyle(0x2d4a3e, 1)
+      g.fillRect(0, 0, TILE, TILE)
+      // Subtle dot texture
+      g.fillStyle(0x3d6050, 0.5)
+      for (let i = 0; i < 8; i++) {
+        g.fillRect((i * 9 + 3) % TILE, (i * 13 + 7) % TILE, 2, 2)
       }
-      // Thin grid line for tile edge
-      g.lineStyle(1, 0x000000, 0.08)
-      g.strokeRect(0, 0, tileSize, tileSize)
     })
 
-    // Path / cobblestone
-    makeTile('tile_path', (g) => {
-      g.fillStyle(0x3a3530, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
-      g.fillStyle(0x4a4540, 0.6)
-      g.fillRect(2, 2, 13, 13)
-      g.fillRect(17, 2, 13, 13)
-      g.fillRect(2, 17, 13, 13)
-      g.fillRect(17, 17, 13, 13)
-      g.lineStyle(1, 0x000000, 0.2)
-      g.strokeRect(0, 0, tileSize, tileSize)
+    make('tile_path', (g) => {
+      g.fillStyle(0x4a4238, 1)
+      g.fillRect(0, 0, TILE, TILE)
+      g.fillStyle(0x5a5248, 0.6)
+      g.fillRect(1, 1, 14, 14)
+      g.fillRect(17, 1, 14, 14)
+      g.fillRect(1, 17, 14, 14)
+      g.fillRect(17, 17, 14, 14)
+      g.lineStyle(1, 0x2a2420, 0.4)
+      g.strokeRect(0, 0, TILE, TILE)
     })
 
-    // Water / puddle
-    makeTile('tile_water', (g) => {
-      g.fillStyle(0x1a3050, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
-      g.fillStyle(0x2a4870, 0.5)
-      g.fillRect(4, 10, 24, 4)
-      g.fillRect(8, 20, 16, 3)
-    })
-
-    // Building wall — dark stone
-    makeTile('tile_wall', (g) => {
-      g.fillStyle(0x282430, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
-      g.fillStyle(0x3a3545, 0.5)
-      // Brick pattern
-      g.fillRect(0, 0, 16, 10)
-      g.fillRect(16, 0, 16, 10)
-      g.fillRect(0, 12, 16, 10)
-      g.fillRect(16, 12, 16, 10)
-      g.lineStyle(1, 0x000000, 0.3)
-      g.strokeRect(0, 0, tileSize, tileSize)
-    })
-
-    // Building floor / interior
-    makeTile('tile_floor', (g) => {
+    make('tile_wall', (g) => {
       g.fillStyle(0x2a2535, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
-      g.lineStyle(1, 0x3a3548, 0.4)
-      g.strokeRect(0, 0, tileSize, tileSize)
+      g.fillRect(0, 0, TILE, TILE)
+      g.fillStyle(0x3a3548, 0.5)
+      g.fillRect(0, 0, 15, 10); g.fillRect(17, 0, 15, 10)
+      g.fillRect(0, 12, 15, 10); g.fillRect(17, 12, 15, 10)
+      g.fillRect(0, 24, 15, 8);  g.fillRect(17, 24, 15, 8)
     })
 
-    // Lantern post
-    makeTile('tile_lantern', (g) => {
-      g.fillStyle(PALETTE.mossDeep, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
+    make('tile_floor', (g) => {
+      g.fillStyle(0x2a2230, 1)
+      g.fillRect(0, 0, TILE, TILE)
+      g.lineStyle(1, 0x3a3248, 0.3)
+      g.strokeRect(0, 0, TILE, TILE)
+    })
+
+    make('tile_water', (g) => {
+      g.fillStyle(0x182840, 1)
+      g.fillRect(0, 0, TILE, TILE)
+      g.fillStyle(0x2a4860, 0.6)
+      g.fillRect(3, 10, 26, 5)
+      g.fillRect(6, 20, 20, 4)
+    })
+
+    make('tile_fence', (g) => {
+      g.fillStyle(0x2d4a3e, 1)
+      g.fillRect(0, 0, TILE, TILE)
+      g.fillStyle(0x6a4c28, 1)
+      g.fillRect(0, 10, TILE, 5)
+      g.fillRect(5, 4, 4, 24)
+      g.fillRect(23, 4, 4, 24)
+    })
+
+    make('tile_lantern', (g) => {
+      g.fillStyle(0x2d4a3e, 1)
+      g.fillRect(0, 0, TILE, TILE)
       // Post
-      g.fillStyle(0x4a3820, 1)
-      g.fillRect(14, 8, 4, 24)
+      g.fillStyle(0x5a4020, 1)
+      g.fillRect(14, 10, 4, 22)
       // Glow
+      g.fillStyle(PALETTE.amberGlow, 0.2)
+      g.fillCircle(16, 12, 12)
       g.fillStyle(PALETTE.amberGlow, 0.5)
-      g.fillCircle(16, 10, 8)
-      g.fillStyle(PALETTE.amber, 0.8)
-      g.fillCircle(16, 10, 4)
-    })
-
-    // Fence
-    makeTile('tile_fence', (g) => {
-      g.fillStyle(PALETTE.mossDeep, 1)
-      g.fillRect(0, 0, tileSize, tileSize)
-      g.fillStyle(0x5a4530, 1)
-      g.fillRect(0, 12, tileSize, 4)   // horizontal rail
-      g.fillRect(6, 6, 3, 20)          // post left
-      g.fillRect(23, 6, 3, 20)         // post right
+      g.fillCircle(16, 12, 6)
+      g.fillStyle(PALETTE.amber, 1)
+      g.fillCircle(16, 12, 3)
     })
   }
 
-  private generateUITextures() {
-    // Grid cell
+  private makeUITextures() {
+    // Battle grid cell — warm wood tone
     const cell = this.make.graphics({ x: 0, y: 0, add: false })
-    cell.fillStyle(PALETTE.panelDark, 0.5)
-    cell.fillRect(0, 0, 64, 64)
-    cell.lineStyle(1, PALETTE.panelBorder, 0.7)
-    cell.strokeRect(0, 0, 64, 64)
+    cell.fillStyle(0x2a2218, 0.7)
+    cell.fillRoundedRect(1, 1, 62, 62, 6)
+    cell.lineStyle(1, 0xc4893a, 0.25)
+    cell.strokeRoundedRect(1, 1, 62, 62, 6)
     cell.generateTexture('grid_cell', 64, 64)
     cell.destroy()
 
-    // HP bar background
+    // HP bar bg
     const hpBg = this.make.graphics({ x: 0, y: 0, add: false })
-    hpBg.fillStyle(PALETTE.nightDeep, 0.9)
-    hpBg.fillRect(0, 0, 52, 7)
-    hpBg.lineStyle(1, PALETTE.panelBorder, 0.5)
-    hpBg.strokeRect(0, 0, 52, 7)
-    hpBg.generateTexture('hp_bar_bg', 52, 7)
+    hpBg.fillStyle(0x1a1208, 0.9)
+    hpBg.fillRoundedRect(0, 0, 52, 8, 4)
+    hpBg.generateTexture('hp_bar_bg', 52, 8)
     hpBg.destroy()
 
-    // Lantern glow
-    const lantern = this.make.graphics({ x: 0, y: 0, add: false })
-    lantern.fillStyle(PALETTE.amberGlow, 0.08)
-    lantern.fillCircle(24, 24, 24)
-    lantern.fillStyle(PALETTE.amberGlow, 0.3)
-    lantern.fillCircle(24, 24, 10)
-    lantern.fillStyle(PALETTE.amber, 1)
-    lantern.fillCircle(24, 24, 4)
-    lantern.generateTexture('lantern', 48, 48)
-    lantern.destroy()
+    // Lantern (UI element)
+    const lan = this.make.graphics({ x: 0, y: 0, add: false })
+    lan.fillStyle(PALETTE.amberGlow, 0.1)
+    lan.fillCircle(24, 24, 24)
+    lan.fillStyle(PALETTE.amberGlow, 0.4)
+    lan.fillCircle(24, 24, 10)
+    lan.fillStyle(PALETTE.amber, 1)
+    lan.fillCircle(24, 24, 4)
+    lan.generateTexture('lantern', 48, 48)
+    lan.destroy()
 
-    // Interaction prompt (E key icon)
+    // Interact prompt
     const prompt = this.make.graphics({ x: 0, y: 0, add: false })
-    prompt.fillStyle(PALETTE.panelDark, 0.85)
-    prompt.fillRoundedRect(0, 0, 40, 20, 3)
-    prompt.lineStyle(1, PALETTE.amber, 0.8)
-    prompt.strokeRoundedRect(0, 0, 40, 20, 3)
-    prompt.generateTexture('interact_prompt', 40, 20)
+    prompt.fillStyle(0x1a1208, 0.9)
+    prompt.fillRoundedRect(0, 0, 48, 22, 4)
+    prompt.lineStyle(1, PALETTE.amber, 0.7)
+    prompt.strokeRoundedRect(0, 0, 48, 22, 4)
+    prompt.generateTexture('interact_prompt', 48, 22)
     prompt.destroy()
+
+    // Warm panel background for battle
+    const panel = this.make.graphics({ x: 0, y: 0, add: false })
+    panel.fillStyle(0x1a1510, 0.85)
+    panel.fillRoundedRect(0, 0, 200, 120, 8)
+    panel.lineStyle(1, 0xc4893a, 0.3)
+    panel.strokeRoundedRect(0, 0, 200, 120, 8)
+    panel.generateTexture('warm_panel', 200, 120)
+    panel.destroy()
   }
 }
