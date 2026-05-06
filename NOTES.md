@@ -187,13 +187,29 @@ Soulstice/
 
 ---
 
-## What's Next (Phase 2)
+## Direction Changes (logged after first visual build)
 
-1. **Run factory** — generate a roguelike node map, encounter types, reward pools (`src/game/run/runFactory.ts`)
-2. **Ram Dass trigger logic** — when/how he appears, quote selection (`src/game/ramdass/triggerLogic.ts`)
-3. **Opening sequence logic** — the NPC tirade, season pick, bonded character spawn (`src/game/run/openingSequence.ts`)
-4. **Phaser 3 setup** — main game scene, canvas mount in React (`src/rendering/`)
-5. **Basic battle UI** — grid display, character sprites, HP bars, event feed
+**Character sprites — REJECTED, needs full redesign**
+- First build used simple rectangles with dot eyes — completely wrong
+- Reference: Vivi Ornitier (FF9 black mage) — chunky body, massive distinctive hat, thick black outlines, visible shading, unique silhouette per character
+- Each season character needs: a hat/hood/crown unique to their season, cloak/robe body, stubby expressive feet, black pixel outline border, shading (lighter highlight on top-left, darker shadow on bottom-right)
+- Sprites drawn at 24x32 base, scaled 2x on screen
+- Skills installed: `pixel-art-sprites`, `tilemaps` (Phaser)
+
+**Opening flow — WRONG, needs overworld first**
+- The season question dialog cannot be the first thing you see
+- Need a walkable top-down overworld (like Pokemon's Pallet Town) first
+- Player spawns in a small rainy village, walks around freely
+- The NPC (complaining guy) is visibly present in the village — hard to miss, but you walk TO him
+- Trigger: either player walks up and presses interact, OR player tries to leave via the north path and NPC steps in (Pokemon professor style)
+- This means we need: OverworldScene, player movement, tilemap, NPC interaction system
+
+## What's Next (Phase 4 — fixing both issues)
+
+1. **Redesign character sprites** — detailed pixel art in BootScene, Vivi-style silhouettes per season
+2. **Build OverworldScene** — walkable tilemap village, player movement (WASD/arrows), camera follow
+3. **NPC interaction system** — walk up + press E/Space to talk, OR blocked at exit gate
+4. **Wire new game flow** — MainMenu → Overworld → (NPC encounter) → OpeningDialog → Battle
 
 ---
 

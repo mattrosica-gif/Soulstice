@@ -2,13 +2,16 @@ import { useEffect, useRef } from 'react'
 import Phaser from 'phaser'
 import { BootScene } from './scenes/BootScene'
 import { MainMenuScene } from './scenes/MainMenuScene'
+import { OverworldScene } from './scenes/OverworldScene'
 import { BattleScene } from './scenes/BattleScene'
 
 interface PhaserGameProps {
   onMainMenuStart: () => void
+  onStrangerTalk: () => void
+  onExitAttempt: () => void
 }
 
-export function PhaserGame({ onMainMenuStart }: PhaserGameProps) {
+export function PhaserGame({ onMainMenuStart, onStrangerTalk, onExitAttempt }: PhaserGameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
 
@@ -22,30 +25,22 @@ export function PhaserGame({ onMainMenuStart }: PhaserGameProps) {
       backgroundColor: '#0d1117',
       pixelArt: true,
       parent: containerRef.current,
-      scene: [BootScene, MainMenuScene, BattleScene],
+      scene: [BootScene, MainMenuScene, OverworldScene, BattleScene],
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
-      },
-      callbacks: {
-        postBoot: (game) => {
-          // Pass React callbacks into MainMenu via scene data when it starts
-          game.events.on('scene-start-MainMenu', () => {
-            game.scene.getScene('MainMenu').scene.restart({ onStart: onMainMenuStart })
-          })
-        },
       },
     }
 
     gameRef.current = new Phaser.Game(config)
 
-    // Wire the MainMenu's start callback after boot
+    // After boot, wire MainMenu callback
     gameRef.current.events.once(Phaser.Core.Events.READY, () => {
       const mainMenu = gameRef.current?.scene.getScene('MainMenu') as MainMenuScene | undefined
-      if (mainMenu) {
-        mainMenu.scene.restart({ onStart: onMainMenuStart })
-      }
+      mainMenu?.scene.restart({ onStart: onMainMenuStart })
     })
+
+    ;(window as any).__soulsticeGame = gameRef.current
 
     return () => {
       gameRef.current?.destroy(true)
@@ -53,10 +48,16 @@ export function PhaserGame({ onMainMenuStart }: PhaserGameProps) {
     }
   }, [])
 
-  // Expose a way for React to transition Phaser scenes
+  // Re-wire overworld callbacks if they change (e.g. after run created)
   useEffect(() => {
-    (window as any).__soulsticeGame = gameRef.current
-  }, [gameRef.current])
+    const game: Phaser.Game | undefined = (window as any).__soulsticeGame
+    if (!game) return
+    const overworld = game.scene.getScene('Overworld') as OverworldScene | undefined
+    if (overworld) {
+      overworld.onStrangerTalk = onStrangerTalk
+      overworld.onExitAttempt = onExitAttempt
+    }
+  }, [onStrangerTalk, onExitAttempt])
 
   return (
     <div
@@ -66,11 +67,22 @@ export function PhaserGame({ onMainMenuStart }: PhaserGameProps) {
   )
 }
 
-// Helper — React code calls this to tell Phaser to switch to the battle scene
+export function startOverworldScene(onStrangerTalk: () => void, onExitAttempt: () => void) {
+  const game: Phaser.Game | undefined = (window as any).__soulsticeGame
+  if (!game) return
+  game.scene.getScenes(true).forEach((s) => s.scene.stop())
+  game.scene.start('Overworld', { onStrangerTalk, onExitAttempt })
+}
+
 export function startBattleScene() {
   const game: Phaser.Game | undefined = (window as any).__soulsticeGame
   if (!game) return
-  const current = game.scene.getScenes(true)[0]
-  if (current) current.scene.stop()
+  game.scene.getScenes(true).forEach((s) => s.scene.stop())
   game.scene.start('Battle')
+}
+
+export function unblockOverworld() {
+  const game: Phaser.Game | undefined = (window as any).__soulsticeGame
+  const overworld = game?.scene.getScene('Overworld') as OverworldScene | undefined
+  overworld?.unblock()
 }

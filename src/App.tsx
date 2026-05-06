@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { PhaserGame, startBattleScene } from './rendering/PhaserGame'
+import { useState, useCallback } from 'react'
+import { PhaserGame, startOverworldScene, startBattleScene, unblockOverworld } from './rendering/PhaserGame'
 import { OpeningDialog } from './ui/OpeningDialog'
 import { RamDassOverlay } from './ui/RamDassOverlay'
 import { useRunStore } from './store/runStore'
@@ -11,7 +11,7 @@ import { generateEnemyTeam } from './game/run/enemyFactory'
 import type { Season } from './game/characters/types'
 import type { RamDassQuote } from './game/ramdass/quotes'
 
-type AppScreen = 'menu' | 'opening' | 'exploration' | 'battle' | 'ramdass'
+type AppScreen = 'menu' | 'overworld' | 'npc_dialog' | 'battle' | 'ramdass'
 
 export default function App() {
   const [screen, setScreen] = useState<AppScreen>('menu')
@@ -21,13 +21,31 @@ export default function App() {
   const runStore = useRunStore()
   const battleStore = useBattleStore()
 
-  const handleMenuStart = () => setScreen('opening')
+  // Main menu → overworld
+  const handleMenuStart = useCallback(() => {
+    setScreen('overworld')
+    startOverworldScene(handleStrangerTalk, handleExitAttempt)
+  }, [])
 
+  // Player walks up to the NPC and presses E
+  const handleStrangerTalk = useCallback(() => {
+    setScreen('npc_dialog')
+  }, [])
+
+  // Player tries to leave the village without talking — NPC calls out
+  const handleExitAttempt = useCallback(() => {
+    setScreen('npc_dialog')
+  }, [])
+
+  // Player picks a season in the opening dialog
   const handleSeasonChosen = (season: Season) => {
     const run = beginRun(season)
     setBondedSeason(season)
     runStore.setRun(run)
+    setScreen('overworld')
+    unblockOverworld()
 
+    // Check for Ram Dass (unlikely on start, but supported)
     if (shouldRamDassAppear(run)) {
       const quote = selectQuote(run)
       if (quote) {
@@ -38,6 +56,7 @@ export default function App() {
       }
     }
 
+    // Go straight into battle
     kickOffBattle(run.team, 1)
     setScreen('battle')
     startBattleScene()
@@ -45,11 +64,13 @@ export default function App() {
 
   const kickOffBattle = (playerTeam: ReturnType<typeof beginRun>['team'], floor: number) => {
     const enemyTeam = generateEnemyTeam(floor)
-    const battle = startBattle(initBattle(playerTeam, enemyTeam))
-    battleStore.setBattle(battle)
+    battleStore.setBattle(startBattle(initBattle(playerTeam, enemyTeam)))
   }
 
   const handleRamDassDismiss = () => {
+    const run = runStore.run
+    if (!run) return
+    kickOffBattle(run.team, 1)
     setScreen('battle')
     startBattleScene()
   }
@@ -57,9 +78,13 @@ export default function App() {
   return (
     <div style={styles.root}>
       <div style={styles.gameWrapper}>
-        <PhaserGame onMainMenuStart={handleMenuStart} />
+        <PhaserGame
+          onMainMenuStart={handleMenuStart}
+          onStrangerTalk={handleStrangerTalk}
+          onExitAttempt={handleExitAttempt}
+        />
 
-        {screen === 'opening' && (
+        {screen === 'npc_dialog' && (
           <OpeningDialog onSeasonChosen={handleSeasonChosen} />
         )}
 
