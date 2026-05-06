@@ -133,3 +133,6 @@ export const CHARACTER_ROSTER: CharacterDefinition[] = [
 
 export const getRosterBySeason = (season: CharacterDefinition['season']) =>
   CHARACTER_ROSTER.filter((c) => c.season === season)
+
+export const CHARACTER_DEFINITIONS_BY_ID: Record<string, CharacterDefinition> =
+  Object.fromEntries(CHARACTER_ROSTER.map((c) => [c.id, c]))
