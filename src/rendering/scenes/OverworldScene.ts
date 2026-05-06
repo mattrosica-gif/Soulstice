@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { PALETTE } from '../palette'
+import { BRIDGE } from '../sceneBridge'
 
 const TILE = 32
 const MAP_W = 28   // tiles wide
@@ -187,8 +188,8 @@ export class OverworldScene extends Phaser.Scene {
     if (this.isSolid(nx, ny)) return
 
     // Check exit at south wall
-    if (ny >= EXIT_TILE_Y && this.onExitAttempt) {
-      this.onExitAttempt()
+    if (ny >= EXIT_TILE_Y) {
+      BRIDGE.onExitAttempt()
       return
     }
 
@@ -245,7 +246,7 @@ export class OverworldScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.interactKey) && this.nearNPC) {
       this.blocked = true
       this.interactPrompt.setVisible(false)
-      if (this.onStrangerTalk) this.onStrangerTalk()
+      BRIDGE.onStrangerTalk()
     }
 
     // Update rain (in camera space)

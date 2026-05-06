@@ -4,40 +4,38 @@ import { BootScene } from './scenes/BootScene'
 import { MainMenuScene } from './scenes/MainMenuScene'
 import { OverworldScene } from './scenes/OverworldScene'
 import { BattleScene } from './scenes/BattleScene'
+import { BRIDGE } from './sceneBridge'
 
 interface PhaserGameProps {
   onMainMenuStart: () => void
-  onStrangerTalk: () => void
-  onExitAttempt: () => void
+  onStrangerTalk:  () => void
+  onExitAttempt:   () => void
 }
 
 export function PhaserGame({ onMainMenuStart, onStrangerTalk, onExitAttempt }: PhaserGameProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const gameRef = useRef<Phaser.Game | null>(null)
+  const gameRef      = useRef<Phaser.Game | null>(null)
+
+  // Keep bridge callbacks current without restarting the game
+  BRIDGE.onMainMenuStart = onMainMenuStart
+  BRIDGE.onStrangerTalk  = onStrangerTalk
+  BRIDGE.onExitAttempt   = onExitAttempt
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return
 
-    const config: Phaser.Types.Core.GameConfig = {
-      type: Phaser.AUTO,
-      width: 800,
-      height: 560,
+    gameRef.current = new Phaser.Game({
+      type:            Phaser.AUTO,
+      width:           800,
+      height:          560,
       backgroundColor: '#0d1117',
-      pixelArt: true,
-      parent: containerRef.current,
-      scene: [BootScene, MainMenuScene, OverworldScene, BattleScene],
+      pixelArt:        true,
+      parent:          containerRef.current,
+      scene:           [BootScene, MainMenuScene, OverworldScene, BattleScene],
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode:       Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
       },
-    }
-
-    gameRef.current = new Phaser.Game(config)
-
-    // After boot, wire MainMenu callback
-    gameRef.current.events.once(Phaser.Core.Events.READY, () => {
-      const mainMenu = gameRef.current?.scene.getScene('MainMenu') as MainMenuScene | undefined
-      mainMenu?.scene.restart({ onStart: onMainMenuStart })
     })
 
     ;(window as any).__soulsticeGame = gameRef.current
@@ -48,30 +46,24 @@ export function PhaserGame({ onMainMenuStart, onStrangerTalk, onExitAttempt }: P
     }
   }, [])
 
-  // Re-wire overworld callbacks if they change (e.g. after run created)
-  useEffect(() => {
-    const game: Phaser.Game | undefined = (window as any).__soulsticeGame
-    if (!game) return
-    const overworld = game.scene.getScene('Overworld') as OverworldScene | undefined
-    if (overworld) {
-      overworld.onStrangerTalk = onStrangerTalk
-      overworld.onExitAttempt = onExitAttempt
-    }
-  }, [onStrangerTalk, onExitAttempt])
-
   return (
     <div
       ref={containerRef}
-      style={{ width: '800px', height: '560px', imageRendering: 'pixelated' }}
+      style={{
+        width:           '800px',
+        height:          '560px',
+        imageRendering:  'pixelated',
+        flexShrink:      0,
+      }}
     />
   )
 }
 
-export function startOverworldScene(onStrangerTalk: () => void, onExitAttempt: () => void) {
+export function startOverworldScene() {
   const game: Phaser.Game | undefined = (window as any).__soulsticeGame
   if (!game) return
   game.scene.getScenes(true).forEach((s) => s.scene.stop())
-  game.scene.start('Overworld', { onStrangerTalk, onExitAttempt })
+  game.scene.start('Overworld')
 }
 
 export function startBattleScene() {
@@ -83,6 +75,6 @@ export function startBattleScene() {
 
 export function unblockOverworld() {
   const game: Phaser.Game | undefined = (window as any).__soulsticeGame
-  const overworld = game?.scene.getScene('Overworld') as OverworldScene | undefined
-  overworld?.unblock()
+  const ow = game?.scene.getScene('Overworld') as OverworldScene | undefined
+  ow?.unblock()
 }

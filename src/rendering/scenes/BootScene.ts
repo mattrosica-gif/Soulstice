@@ -20,7 +20,7 @@ export class BootScene extends Phaser.Scene {
     this.generateOverworldSprites()
     this.generateTileTextures()
     this.generateUITextures()
-    this.scene.start('Overworld')
+    this.scene.start('MainMenu')
   }
 
   private generateCharacterSprites() {

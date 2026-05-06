@@ -14,63 +14,53 @@ import type { RamDassQuote } from './game/ramdass/quotes'
 type AppScreen = 'menu' | 'overworld' | 'npc_dialog' | 'battle' | 'ramdass'
 
 export default function App() {
-  const [screen, setScreen] = useState<AppScreen>('menu')
-  const [ramDassQuote, setRamDassQuote] = useState<RamDassQuote | null>(null)
-  const [bondedSeason, setBondedSeason] = useState<Season>('spring')
+  const [screen, setScreen]         = useState<AppScreen>('menu')
+  const [ramDassQuote, setQuote]    = useState<RamDassQuote | null>(null)
+  const [bondedSeason, setSeason]   = useState<Season>('spring')
 
-  const runStore = useRunStore()
+  const runStore    = useRunStore()
   const battleStore = useBattleStore()
 
-  // Main menu → overworld
   const handleMenuStart = useCallback(() => {
     setScreen('overworld')
-    startOverworldScene(handleStrangerTalk, handleExitAttempt)
+    startOverworldScene()
   }, [])
 
-  // Player walks up to the NPC and presses E
   const handleStrangerTalk = useCallback(() => {
     setScreen('npc_dialog')
   }, [])
 
-  // Player tries to leave the village without talking — NPC calls out
   const handleExitAttempt = useCallback(() => {
     setScreen('npc_dialog')
   }, [])
 
-  // Player picks a season in the opening dialog
   const handleSeasonChosen = (season: Season) => {
     const run = beginRun(season)
-    setBondedSeason(season)
+    setSeason(season)
     runStore.setRun(run)
-    setScreen('overworld')
     unblockOverworld()
 
-    // Check for Ram Dass (unlikely on start, but supported)
     if (shouldRamDassAppear(run)) {
       const quote = selectQuote(run)
       if (quote) {
-        setRamDassQuote(quote)
+        setQuote(quote)
         runStore.markQuoteShown(quote.id)
         setScreen('ramdass')
         return
       }
     }
 
-    // Go straight into battle
-    kickOffBattle(run.team, 1)
+    const enemyTeam = generateEnemyTeam(1)
+    battleStore.setBattle(startBattle(initBattle(run.team, enemyTeam)))
     setScreen('battle')
     startBattleScene()
-  }
-
-  const kickOffBattle = (playerTeam: ReturnType<typeof beginRun>['team'], floor: number) => {
-    const enemyTeam = generateEnemyTeam(floor)
-    battleStore.setBattle(startBattle(initBattle(playerTeam, enemyTeam)))
   }
 
   const handleRamDassDismiss = () => {
     const run = runStore.run
     if (!run) return
-    kickOffBattle(run.team, 1)
+    const enemyTeam = generateEnemyTeam(1)
+    battleStore.setBattle(startBattle(initBattle(run.team, enemyTeam)))
     setScreen('battle')
     startBattleScene()
   }
@@ -102,18 +92,18 @@ export default function App() {
 
 const styles: Record<string, React.CSSProperties> = {
   root: {
-    width: '100vw',
-    height: '100vh',
-    background: '#0d1117',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: 0,
-    padding: 0,
+    width:           '100%',
+    height:          '100%',
+    display:         'flex',
+    alignItems:      'center',
+    justifyContent:  'center',
+    background:      '#0d1117',
+    overflow:        'hidden',
   },
   gameWrapper: {
-    position: 'relative',
-    width: '800px',
-    height: '560px',
+    position:  'relative',
+    width:     '800px',
+    height:    '560px',
+    flexShrink: 0,
   },
 }

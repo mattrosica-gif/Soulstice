@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { PALETTE } from '../palette'
+import { BRIDGE } from '../sceneBridge'
 
 const RAIN_COUNT = 120
 
@@ -15,13 +16,7 @@ export class MainMenuScene extends Phaser.Scene {
   private rain: RainDrop[] = []
   private rainGraphics!: Phaser.GameObjects.Graphics
   private lanterns: Phaser.GameObjects.Image[] = []
-  private onStartCallback?: () => void
-
   constructor() { super({ key: 'MainMenu' }) }
-
-  init(data: { onStart?: () => void }) {
-    this.onStartCallback = data.onStart
-  }
 
   create() {
     const { width, height } = this.scale
@@ -102,7 +97,7 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   private handleStart() {
-    if (this.onStartCallback) this.onStartCallback()
+    BRIDGE.onMainMenuStart()
   }
 
   private initRain(width: number, height: number) {
