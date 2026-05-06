@@ -39,23 +39,22 @@ Real-world intuitive — everyone already carries seasonal associations in their
 - Winter freezes Spring (frost kills new growth)
 - Spring drowns Summer (rain cools and overwhelms heat)
 
+**Multipliers (defined in `src/game/characters/types.ts`):**
+- Counter advantage: 1.5x damage
+- Counter weakness: 0.67x damage
+
 **Character archetypes by season:**
 - **Summer** — aggressive, high damage, burns through opponents
 - **Autumn** — balanced, drain/decay abilities, outlasts enemies
 - **Winter** — slow, stoic, tanky, massive burst damage
 - **Spring** — fast, evasive, healing, hard to pin down
 
-This system was chosen over:
-- Animal ecology (food chain) — rejected because it forced characters to BE animals
-- Classical elements (fire/water/ice) — too similar to Pokemon, not different enough
-- Military unit counters — good but less visually expressive
-- Social manipulation triangle — interesting but less intuitive at a glance
-
 ### Combat: Auto-Battler Grid
-- Player fields 3–5 characters on a small grid before each fight
+- Player fields 3–5 characters on a 3x2 grid before each fight
+- Enemy team mirrors on the opposite side
 - Characters fight automatically based on position, affinity, and ability loadout
-- Player has **1–2 limited interventions** per battle (not spammy — use them at the right moment)
-- Depth comes from team composition, synergies, and positioning — not from clicking through menus
+- Player has **2 limited interventions** per battle — manually fire an ability at the right moment
+- Depth comes from team composition, synergies, and positioning
 
 ### Progression System: Two Parallel Loops
 
@@ -65,48 +64,29 @@ This system was chosen over:
 - Standard RPG feel — you grow attached to your characters over a run
 
 **Loop 2 — Ability/Weapon Upgrades (Hyper Scape fuse system):**
-- Every ability/weapon found is always **Tier 1**, no exceptions
-- Find a duplicate of the same ability/weapon → fuse them → upgrades to Tier 2
-- Find another duplicate → fuse again → Tier 3 (max, possibly T4 as rare cap)
-- Higher tiers: better stats + visual change (sprite evolves, new color palette)
-- **The tension:** Do I fuse this duplicate to upgrade my T1 ability to T2... or grab a new ability for team synergy I'm missing?
-
-This was inspired by Hyper Scape (Ubisoft battle royale) where weapons/hacks always started at T1 and upgraded through fusing duplicates.
+- Every ability found is always **Tier 1**, no exceptions
+- Find a duplicate → fuse them → upgrades to Tier 2
+- Find another duplicate → Tier 3, then Tier 4 (max)
+- Higher tiers: better stats + different fx key (visual variant)
+- **The tension:** Fuse for power vs grab new ability for synergy
+- Defined in `src/game/abilities/types.ts`
 
 ### The Spiritual Layer: Ram Dass
 
-This is the heart of the game's identity.
-
-At certain moments — brutal loss streaks, specific run checkpoints, moments that feel impossible — **Ram Dass appears**. Not a cutscene. Not a tutorial. A quiet encounter.
+At certain moments — consecutive losses (threshold: 2), checkpoints, first defeat — **Ram Dass appears**.
 
 **Who he is:**
-- A pixel art figure clearly modeled on Ram Dass (Richard Alpert, 1931–2019)
-- Long white flowing beard, warm eyes, mala beads in hand
-- Sitting in lotus position or wandering with a staff
-- Slightly different visual treatment from the rest of the world — warmer amber glow, softer pixel palette around him
+- Pixel art figure clearly modeled on Ram Dass (Richard Alpert, 1931–2019)
+- Long white flowing beard, mala beads, warm amber glow
+- Slightly different visual treatment — softer palette, unhurried idle animation
 
-**What he does:**
-- Speaks in Ram Dass's actual cadence — short, unhurried, loving
-- Pulls from his real quotes (lightly adapted for game context):
-  - *"Be here now."*
-  - *"We're all just walking each other home."*
-  - *"The quieter you become, the more you can hear."*
-  - *"You are loved just for being who you are, just for existing."*
-  - *"Treat everyone you meet like God in drag."*
-- Does NOT fix your problem mechanically — he reframes it
-- May offer a small nudge: a new recruit option, a free ability fuse — but the wisdom IS the moment
+**Trigger logic (defined in `src/game/run/types.ts`):**
+- `RAM_DASS_LOSS_THRESHOLD = 2` — appears after 2 consecutive losses
+- Also appears at specific checkpoint nodes in the run map
+- Quotes have trigger types: `consecutive_loss`, `checkpoint`, `first_defeat`, `any`
+- Already-shown quotes tracked in `RunState.shownQuoteIds` to avoid repeats
 
-**Why Ram Dass specifically:**
-- The creator is drawn to Ram Dass, psychedelics, and religious mystics as themes
-- These shouldn't dominate the game but should surface at the edges — at the threshold moments
-- It gives the game a spiritual father figure, a sense that failure is part of something larger
-- Ram Dass passed in 2019 — this is tribute territory, done with deep respect
-
-**Visual moment when he appears:**
-- Ambient palette shifts slightly warmer and softer
-- Rain slows or softens in the background
-- Music shifts to something meditative
-- His sprite has a distinct idle animation — unhurried, present
+**Quote pool:** `src/game/ramdass/quotes.ts` — 10 quotes, never hardcode inline
 
 ---
 
@@ -114,31 +94,38 @@ At certain moments — brutal loss streaks, specific run checkpoints, moments th
 
 - **Framework:** React + TypeScript
 - **State management:** Zustand
-- **Rendering:** Canvas API for sprite/game rendering, React for UI chrome
+- **Game engine:** Phaser 3 (handles game loop, scene management, sprite animation, input, audio)
 - **Build tool:** Vite
-- **Skill:** `pixel-art-game-builder` (installed via `npx skills add cooksaw/claude-skills@pixel-art-game-builder`)
-- **Platform:** Browser-based (no backend, runs locally or can be hosted as static site)
+- **Skills installed:** `pixel-art-game-builder`, `game-development`
+- **Platform:** Browser-based, no backend
+
+**Architecture rule:** All game logic lives in `src/game/` with zero React/Phaser dependencies. Phaser is rendering only. Zustand is the bridge between game logic and React UI.
 
 ---
 
-## Project Structure (planned)
+## Project Structure
 
 ```
 Soulstice/
-├── NOTES.md              ← This file. Always keep updated.
+├── NOTES.md                          ← This file. Always keep updated.
 ├── src/
 │   ├── game/
-│   │   ├── characters/   ← Character definitions, stats, season affinity
-│   │   ├── abilities/    ← Ability definitions, tier system
-│   │   ├── combat/       ← Auto-battler logic, grid, AI
-│   │   ├── run/          ← Roguelike run state, progression
-│   │   └── ramdass/      ← Ram Dass encounter logic, quote pool
-│   ├── rendering/        ← Canvas sprite rendering, animations
-│   ├── store/            ← Zustand state stores
-│   ├── ui/               ← React UI components (HUD, menus, etc.)
-│   └── main.tsx
-├── public/
-│   └── assets/           ← Sprites, audio
+│   │   ├── characters/
+│   │   │   └── types.ts              ← Character, CharacterDefinition, Season, SEASON_COUNTERS
+│   │   ├── abilities/
+│   │   │   └── types.ts              ← Ability, AbilityDefinition, AbilityTierData, fuse constants
+│   │   ├── combat/
+│   │   │   └── types.ts              ← BattleState, BattleCharacter, BattleEvent, InterventionAction
+│   │   ├── run/
+│   │   │   └── types.ts              ← RunState, GameScreen, Encounter, RunNode, RewardOption
+│   │   └── ramdass/
+│   │       └── quotes.ts             ← RamDassQuote[], full quote pool with trigger types
+│   ├── store/
+│   │   ├── runStore.ts               ← Zustand: run lifecycle, team, inventory, loss tracking
+│   │   └── battleStore.ts            ← Zustand: battle state, tick updates, intervention handling
+│   ├── rendering/                    ← (empty) Phaser scenes and sprite logic go here
+│   ├── ui/                           ← (empty) React UI components go here
+│   └── main.tsx                      ← Vite entry point
 ├── package.json
 └── vite.config.ts
 ```
@@ -147,21 +134,25 @@ Soulstice/
 
 ## What's Been Built
 
-- [ ] Nothing yet — project folder created, design locked, ready to scaffold
+- [x] Project folder created, design locked
+- [x] Git repo initialized, pushed to https://github.com/mattrosica-gif/Soulstice
+- [x] Vite + React + TypeScript scaffolded
+- [x] Zustand + Phaser 3 installed
+- [x] Full folder structure created
+- [x] All TypeScript schemas defined — zero type errors
+- [x] Zustand stores scaffolded (runStore, battleStore)
 
 ---
 
-## What's Next
+## What's Next (Phase 1)
 
-1. Scaffold Vite + React + TypeScript project
-2. Set up Zustand stores for run state, character state, ability inventory
-3. Build the Canvas rendering layer — basic grid, character sprites
-4. Implement season affinity system
-5. Build basic auto-battle loop (no UI yet, just logic)
-6. Add ability fuse system
-7. Build run/roguelike loop (encounter flow, rewards, progression)
-8. Add Ram Dass encounter system
-9. Polish: rain animation, ambient palette, sound
+1. **Character roster data** — define 8–12 characters across the four seasons in `src/game/characters/roster.ts`
+2. **Ability data** — define starter ability pool in `src/game/abilities/abilityPool.ts`
+3. **Season counter logic** — pure TS function `getSeasonMultiplier(attacker, defender)` in `src/game/characters/`
+4. **Auto-battle engine** — pure TS battle tick loop in `src/game/combat/battleEngine.ts`
+5. **Run factory** — function to generate a new run with a map of nodes in `src/game/run/runFactory.ts`
+6. **EXP + leveling** — `src/game/characters/leveling.ts`
+7. **Ability fuse logic** — `src/game/abilities/fusionEngine.ts`
 
 ---
 
@@ -169,17 +160,18 @@ Soulstice/
 
 - How many characters in the starting roster? (suggest 8–12 across the four seasons)
 - Does the player start each run with 1 character or a small preset team?
-- Is there a persistent meta-progression between runs (like Hades' darkness upgrades) or is it purely fresh each run?
-- Multiplayer ever, or strictly single player?
+- Is there persistent meta-progression between runs (like Hades' darkness system) or purely fresh each run?
 
 ---
 
 ## Conventions (for Codex handoff)
 
-- All game logic lives in `src/game/` — no React dependencies in these files
-- React is only for UI chrome — the game canvas is a single `<canvas>` element managed by the game loop
-- Zustand stores are the bridge between game logic and React UI
-- Sprites are generated procedurally via Canvas API (no external sprite sheets needed to start)
-- Season affinity is a string union: `'spring' | 'summer' | 'autumn' | 'winter'`
-- Ability tiers are numbers 1–3 (possibly 4 for rare cap)
-- Ram Dass quotes live in `src/game/ramdass/quotes.ts` as a typed array — never hardcode them inline
+- All game logic in `src/game/` — zero React or Phaser imports in these files
+- Phaser only in `src/rendering/`
+- React only in `src/ui/` and `src/main.tsx`
+- Zustand stores in `src/store/` bridge the two worlds
+- Season affinity: `'spring' | 'summer' | 'autumn' | 'winter'`
+- Ability tiers: `1 | 2 | 3 | 4`
+- Ram Dass quotes always referenced by id, never hardcoded inline
+- `SEASON_COUNTERS` map and multiplier constants live in `src/game/characters/types.ts`
+- `RAM_DASS_LOSS_THRESHOLD` lives in `src/game/run/types.ts`
