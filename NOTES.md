@@ -177,18 +177,23 @@ Soulstice/
 - [x] Full folder structure created
 - [x] All TypeScript schemas defined — zero type errors
 - [x] Zustand stores scaffolded (runStore, battleStore)
+- [x] Character factory — `spawnCharacter()`, `spawnBondedCharacter()`, growth rate + temperament rolling
+- [x] Leveling engine — `computeStats()`, `awardExp()`, EXP curve, temperament reveal on first level up
+- [x] 16-ability pool across all 4 seasons with full 4-tier definitions
+- [x] Fusion engine — `fuseAbility()`, `receiveAbility()`, Hyper Scape duplicate-to-upgrade mechanic
+- [x] Auto-battle engine — full tick loop, damage calc, season multipliers, status effects, targeting AI, player interventions
+
+**Equipped ability format:** `"abilityId:tier"` string in `character.equippedAbilities[]`
 
 ---
 
-## What's Next (Phase 1)
+## What's Next (Phase 2)
 
-1. **Character roster data** — define 8–12 characters across the four seasons in `src/game/characters/roster.ts`
-2. **Ability data** — define starter ability pool in `src/game/abilities/abilityPool.ts`
-3. **Season counter logic** — pure TS function `getSeasonMultiplier(attacker, defender)` in `src/game/characters/`
-4. **Auto-battle engine** — pure TS battle tick loop in `src/game/combat/battleEngine.ts`
-5. **Run factory** — function to generate a new run with a map of nodes in `src/game/run/runFactory.ts`
-6. **EXP + leveling** — `src/game/characters/leveling.ts`
-7. **Ability fuse logic** — `src/game/abilities/fusionEngine.ts`
+1. **Run factory** — generate a roguelike node map, encounter types, reward pools (`src/game/run/runFactory.ts`)
+2. **Ram Dass trigger logic** — when/how he appears, quote selection (`src/game/ramdass/triggerLogic.ts`)
+3. **Opening sequence logic** — the NPC tirade, season pick, bonded character spawn (`src/game/run/openingSequence.ts`)
+4. **Phaser 3 setup** — main game scene, canvas mount in React (`src/rendering/`)
+5. **Basic battle UI** — grid display, character sprites, HP bars, event feed
 
 ---
 
