@@ -26,22 +26,58 @@ export interface CharacterDefinition {
   spriteKey: string
 }
 
+export type StatKey = 'attack' | 'defense' | 'speed' | 'evasion' | 'maxHp'
+
+export type TemperamentId = 'resolute' | 'nimble' | 'ironclad' | 'ghostlike' | 'radiant'
+
+export interface Temperament {
+  id: TemperamentId
+  name: string
+  // stat that gets +15%
+  bonusStat: StatKey | null
+  // stat that gets -10%
+  penaltyStat: StatKey | null
+}
+
+export const TEMPERAMENTS: Record<TemperamentId, Temperament> = {
+  resolute:  { id: 'resolute',  name: 'Resolute',  bonusStat: 'attack',  penaltyStat: 'evasion'  },
+  nimble:    { id: 'nimble',    name: 'Nimble',    bonusStat: 'speed',   penaltyStat: 'defense'  },
+  ironclad:  { id: 'ironclad',  name: 'Ironclad',  bonusStat: 'defense', penaltyStat: 'speed'    },
+  ghostlike: { id: 'ghostlike', name: 'Ghostlike', bonusStat: 'evasion', penaltyStat: 'attack'   },
+  radiant:   { id: 'radiant',   name: 'Radiant',   bonusStat: null,      penaltyStat: null       },
+}
+
+// Growth rates per stat — rolled at character creation, affect stat scaling per level
+export interface GrowthRates {
+  attack: number   // 0.0 – 1.0
+  defense: number
+  speed: number
+  evasion: number
+  maxHp: number
+}
+
+export const GROWTH_RATE_NORMAL: [min: number, max: number] = [0.3, 0.8]
+export const GROWTH_RATE_BONDED: [min: number, max: number] = [0.7, 1.0]
+
 // A live character instance within a run
 export interface Character {
-  // matches a CharacterDefinition id
+  // unique instance id for this run (not the definition id)
+  instanceId: string
   definitionId: string
-  // snapshot of definition at time of recruit (name, season, role, spriteKey)
   name: string
   season: Season
   role: CharacterRole
   spriteKey: string
+  isBonded: boolean
+  // temperament revealed to player after first battle
+  temperament: TemperamentId
+  temperamentRevealed: boolean
+  growthRates: GrowthRates
   level: number
   exp: number
   expToNextLevel: number
   stats: CharacterStats
-  // ability ids currently equipped, indexed by slot (0-2)
   equippedAbilities: (string | null)[]
-  // grid position during battle [col, row], null when not placed
   gridPosition: [number, number] | null
 }
 

@@ -71,6 +71,42 @@ Real-world intuitive — everyone already carries seasonal associations in their
 - **The tension:** Fuse for power vs grab new ability for synergy
 - Defined in `src/game/abilities/types.ts`
 
+### Run Start: Meeting Your Main (The Bond)
+
+Inspired by Ash meeting Pikachu — your first character is your *main*, not a selection from a list.
+
+**The disguised season pick:**
+- Opening scene: rainy night, a village. An NPC (a merchant, farmer, or old local — someone with a reason to be outside in bad weather) launches into a long tirade about the current season. Rain, mud, his back, the cart. Then catches himself: *"...I'm rambling. What season do you like?"*
+- Player picks Spring / Summer / Autumn / Winter — feels like small talk, not a game mechanic
+- The NPC's tirade varies between runs. His identity (innkeeper, farmer, merchant, gate-keeper) is TBD
+- The word "actually" in the question earns itself because he just spent 30 seconds complaining
+
+**The bonded character:**
+- A random character of the chosen season is assigned as the player's main
+- They are never chosen from a list — the game presents them as found, not picked
+- The bond is immediate and wordless — a brief scene, not a tutorial
+
+**Bond mechanics:**
+- Main can never be benched or removed from the team
+- Passive bonus when adjacent to allies on the grid (TBD exact value)
+- Unique reaction line when Ram Dass appears
+- If they fall in battle: run doesn't end but music/palette shifts to signal the weight of it
+- Inventory shows "Bonded" where season would normally appear — season revealed through play
+
+**Main character stat generation:**
+- **Potential** (like Pokemon IVs): each stat has a growth rate `0.0–1.0` rolled at spawn
+  - Normal recruits: `0.3–0.8` per stat
+  - Main character: `0.7–1.0` per stat — noticeably exceptional as they level
+- **Temperament** (like Pokemon Nature): named personality, `+15%` one stat, `-10%` another
+  - `Resolute` — Attack+, Evasion-
+  - `Nimble` — Speed+, Defense-
+  - `Ironclad` — Defense+, Speed-
+  - `Ghostlike` — Evasion+, Attack-
+  - `Radiant` — balanced, no penalty (rare)
+- Temperament name revealed after first battle
+- Potential felt organically through leveling — never shown as a number
+- All recruits have temperament + potential, but main's potential floor is higher
+
 ### The Spiritual Layer: Ram Dass
 
 At certain moments — consecutive losses (threshold: 2), checkpoints, first defeat — **Ram Dass appears**.
