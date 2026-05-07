@@ -182,34 +182,82 @@ Soulstice/
 - [x] 16-ability pool across all 4 seasons with full 4-tier definitions
 - [x] Fusion engine — `fuseAbility()`, `receiveAbility()`, Hyper Scape duplicate-to-upgrade mechanic
 - [x] Auto-battle engine — full tick loop, damage calc, season multipliers, status effects, targeting AI, player interventions
+- [x] Run factory — 10-floor roguelike node map, encounter types, reward pools
+- [x] Enemy factory — teams scale to floor depth, boss on floor 10 (1.8x HP)
+- [x] Opening sequence — 4 NPC tirade variants, `beginRun(season)`, bonded character spawn
+- [x] Ram Dass trigger logic — `shouldRamDassAppear()`, `selectQuote()`, avoids repeating quotes
+- [x] Phaser 3 rendering layer — BootScene (procedural textures), MainMenuScene (rain + title), BattleScene (grid + auto-battle), OverworldScene (walkable village)
+- [x] Scene bridge pattern — `BRIDGE` object in `src/rendering/sceneBridge.ts` connects Phaser scenes to React without prop threading or stale closures
+- [x] Character sprites v3 — cute round blob approach (`src/rendering/sprites/drawCharacter.ts`), drawn with Phaser Graphics API (circles/rects), NOT pixel maps
+- [x] Seasonal accessories: Spring=flower crown, Summer=sun disc with rays, Autumn=acorn cap, Winter=ice crystal crown
+- [x] Overworld village — 28x24 tile map, WASD/arrow movement, snap-to-tile with squish animation, NPC proximity detection, [E] interact prompt
+- [x] Post-battle screen — warm panel overlay, "return to village" button, Ram Dass quote on defeat
+- [x] Full CSS reset — `src/index.css` cleaned of all Vite defaults, no scrollbars/white area
 
 **Equipped ability format:** `"abilityId:tier"` string in `character.equippedAbilities[]`
 
 ---
 
-## Direction Changes (logged after first visual build)
+## Sprite System (important for Codex)
 
-**Character sprites — REJECTED, needs full redesign**
-- First build used simple rectangles with dot eyes — completely wrong
-- Reference: Vivi Ornitier (FF9 black mage) — chunky body, massive distinctive hat, thick black outlines, visible shading, unique silhouette per character
-- Each season character needs: a hat/hood/crown unique to their season, cloak/robe body, stubby expressive feet, black pixel outline border, shading (lighter highlight on top-left, darker shadow on bottom-right)
-- Sprites drawn at 24x32 base, scaled 2x on screen
-- Skills installed: `pixel-art-sprites`, `tilemaps` (Phaser)
+**DO NOT use pixel maps** (string arrays like `"__KKK___"`). They were tried twice and produce ugly results because you can't visualize them while writing.
 
-**Opening flow — WRONG, needs overworld first**
-- The season question dialog cannot be the first thing you see
-- Need a walkable top-down overworld (like Pokemon's Pallet Town) first
-- Player spawns in a small rainy village, walks around freely
-- The NPC (complaining guy) is visibly present in the village — hard to miss, but you walk TO him
-- Trigger: either player walks up and presses interact, OR player tries to leave via the north path and NPC steps in (Pokemon professor style)
-- This means we need: OverworldScene, player movement, tilemap, NPC interaction system
+**Current approach:** `src/rendering/sprites/drawCharacter.ts`
+- `drawCharacter(g, opts)` — draws a cute round blob character on a Phaser Graphics object
+- `drawRamDass(g)` — Ram Dass seated NPC
+- `drawPlayerTopDown(g)` — overworld top-down player sprite
+- Season accessories: `springAccessory`, `summerAccessory`, `autumnAccessory`, `winterAccessory`
+- All textures generated in `BootScene.create()` and stored as Phaser textures by key
 
-## What's Next (Phase 4 — fixing both issues)
+**Character texture keys:**
+- `char_spring`, `char_summer`, `char_autumn`, `char_winter` — battle sprites (48x56)
+- `char_spring_bonded` etc. — bonded variant with amber ring
+- `player` — overworld top-down (24x24)
+- `npc_stranger` — the complaining NPC (24x24)
+- `npc_ramdass` — Ram Dass seated (48x56)
 
-1. **Redesign character sprites** — detailed pixel art in BootScene, Vivi-style silhouettes per season
-2. **Build OverworldScene** — walkable tilemap village, player movement (WASD/arrows), camera follow
-3. **NPC interaction system** — walk up + press E/Space to talk, OR blocked at exit gate
-4. **Wire new game flow** — MainMenu → Overworld → (NPC encounter) → OpeningDialog → Battle
+---
+
+## Scene Bridge Pattern
+
+All Phaser→React communication goes through `src/rendering/sceneBridge.ts`:
+```ts
+export const BRIDGE = {
+  onMainMenuStart:   () => {},
+  onStrangerTalk:    () => {},
+  onExitAttempt:     () => {},
+  onReturnToVillage: () => {},
+}
+```
+React sets these in `PhaserGame.tsx` before mounting. Scenes call them directly.
+**Never pass callbacks through Phaser scene `init()` data** — causes dark screen bugs on re-render.
+
+---
+
+## Game Flow (current)
+
+```
+MainMenu (press any key)
+  → Overworld (walk around village)
+    → Talk to stranger NPC [E] or try to exit south
+      → OpeningDialog (NPC tirade → season pick)
+        → Run created, bonded character spawned
+          → Battle (auto-battle vs floor 1 enemies)
+            → Victory/Defeat screen
+              → "Return to village" → Overworld
+```
+
+---
+
+## Known Issues / What's Next
+
+1. **Sprites still need more personality** — blobs are cute but could use more detail/expression
+2. **No exploration between battles** — after returning to village, nothing to do yet; need encounter map navigation
+3. **No ability equipping UI** — abilities exist in data but no screen to equip them
+4. **No recruit/reward screen** — post-battle victory has no reward flow yet
+5. **Overworld map needs more life** — currently just tiles and one NPC; needs more characters, details, atmosphere
+6. **Movement debounce** — holding a direction should repeat after a short delay
+7. **No audio** — ambient rain sound, battle music, Ram Dass encounter tone would all elevate the feel significantly
 
 ---
 
